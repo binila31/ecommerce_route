@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../models/product.dart';
+import 'package:ecommerce_route/models/product.dart';
+import 'package:ecommerce_route/services/api_service.dart';
 
 class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
   bool _isLoading = true;
+
   List<Product> get products => _products;
   bool get isLoading => _isLoading;
+
+  final ApiService _apiService = ApiService();
+
   ProductProvider() {
     fetchProducts();
   }
+
   Future<void> fetchProducts() async {
-    final url = 'https://fakestoreapi.com/products';
-    final response = await http.get(Uri.parse(url));
-    final extractedData = json.decode(response.body) as List<dynamic>;
     _isLoading = true;
-    _products = extractedData.map((data) => Product.fromJson(data)).toList();
+    notifyListeners();
+
+    try {
+      _products = await _apiService.fetchProducts();
+    } catch (error) {
+      // Handle errors appropriately here
+      print('Failed to fetch products: $error');
+    }
+
+    _isLoading = false;
     notifyListeners();
   }
 
@@ -27,5 +37,3 @@ class ProductProvider with ChangeNotifier {
     return _products.where((prod) => prod.category == category).toList();
   }
 }
-
-
